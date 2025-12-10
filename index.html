@@ -66,7 +66,7 @@ async function checkEarthquake() {
 
     // ★★★ 三重県の揺れがあるか判定（ここがポイント） ★★★
     const isMie =
-      data[0].points.some(p => p.pref === "三重県");
+      data[0].points.some(p => p.pref === "青森県");
 
     if (!isMie) return;
 
