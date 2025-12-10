@@ -1,52 +1,9 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<title>商店街公式サイト</title>
-<style>
-  /* ポップアップのスタイル */
-  #alertPopup {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: red;
-    color: white;
-    padding: 15px;
-    font-size: 18px;
-    text-align: center;
-    display: none;
-    z-index: 9999;
-  }
-
-  /* フッターの緊急帯 */
-  #alertFooter {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #800000;
-    color: white;
-    padding: 10px;
-    font-size: 16px;
-    text-align: center;
-    display: none;
-    z-index: 9999;
-  }
-</style>
-</head>
-
-<body>
-
-<div id="alertPopup"></div>
-<div id="alertFooter"></div>
-
 <script>
 // ----------------------------
 // 設定
 // ----------------------------
-const TARGET_CITY = "洲本市";        // 津波警報の対象判定
-const SHAKE_END_MS = 30 * 60 * 1000; // 地震表示は30分で消える
+const TARGET_CITY = "洲本市";        // 津波判定
+const SHAKE_END_MS = 30 * 60 * 1000; // 地震表示は30分だけ
 
 let lastEarthquakeTime = null;
 let earthquakeTimer = null;
@@ -63,14 +20,28 @@ async function checkEarthquake() {
 
     const eq = data[0].earthquake;
     const time = new Date(eq.time);
-    
-    // 新しい地震なら
+    const hypocenter = eq.hypocenter.name;
+
+    // ▼ 震源地域が兵庫県のときだけ表示
+    if (!hypocenter.includes("兵庫")) {
+      return;
+    }
+
+    // 新しい地震なら表示
     if (!lastEarthquakeTime || time > lastEarthquakeTime) {
       lastEarthquakeTime = time;
-      showAlertPopup(`【地震情報】最大震度 ${eq.maxScale/10}（${eq.hypocenter.name}）`);
-      showFooter(`地震発生（最大震度 ${eq.maxScale/10}）`);
-      
-      // 30分後に地震表示を消す
+
+      const timeStr = time.toLocaleString("ja-JP"); // 時刻を日本語表記で
+
+      showAlertPopup(
+        `【地震情報】兵庫県で地震発生\n` +
+        `最大震度：${eq.maxScale / 10}\n` +
+        `発生時刻：${timeStr}`
+      );
+
+      showFooter(`兵庫県で地震発生（最大震度 ${eq.maxScale / 10}）`);
+
+      // 30分後に自動で消す
       if (earthquakeTimer) clearTimeout(earthquakeTimer);
       earthquakeTimer = setTimeout(() => {
         hideAlertPopup();
@@ -81,78 +52,4 @@ async function checkEarthquake() {
     console.log("P2P地震取得エラー", e);
   }
 }
-
-// ----------------------------
-// 津波情報の取得
-// ----------------------------
-async function checkTsunami() {
-  try {
-    const res = await fetch("https://www.data.jma.go.jp/developer/xml/data/Tsunami.json");
-    const json = await res.json();
-
-    let isActive = false;
-    let message = "";
-
-    json.Body.Tsunami.Type.forEach(t => {
-      const areaList = t.Area || [];
-      areaList.forEach(a => {
-        if (a.Name.includes(TARGET_CITY)) {
-          isActive = true;
-          message = t.Code === "52" ? "津波警報" :
-                    t.Code === "51" ? "津波注意報" :
-                    t.Code === "53" ? "大津波警報" :
-                    "津波情報";
-        }
-      });
-    });
-
-    if (isActive) {
-      tsunamiActive = true;
-      showAlertPopup(`【${message}】${TARGET_CITY}に発令中`);
-      showFooter(`${message} 発令中`);
-    } else {
-      tsunamiActive = false;
-      hideAlertPopup();
-      hideFooter();
-    }
-  } catch (e) {
-    console.log("津波情報取得エラー", e);
-  }
-}
-
-// ----------------------------
-// 表示制御
-// ----------------------------
-function showAlertPopup(text) {
-  const el = document.getElementById("alertPopup");
-  el.innerText = text;
-  el.style.display = "block";
-}
-
-function hideAlertPopup() {
-  document.getElementById("alertPopup").style.display = "none";
-}
-
-function showFooter(text) {
-  const el = document.getElementById("alertFooter");
-  el.innerText = text;
-  el.style.display = "block";
-}
-
-function hideFooter() {
-  document.getElementById("alertFooter").style.display = "none";
-}
-
-// ----------------------------
-// 定期チェック（30秒ごと）
-// ----------------------------
-setInterval(checkEarthquake, 30000);
-setInterval(checkTsunami, 30000);
-
-// 初回読み込み
-checkEarthquake();
-checkTsunami();
 </script>
-
-</body>
-</html>
