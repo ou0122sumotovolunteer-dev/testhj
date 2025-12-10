@@ -69,7 +69,7 @@ async function checkEarthquake() {
 
     // ▼ 震源地域が兵庫県のときだけ表示
     //   三重県に変えるなら「兵庫県」を「三重県」に変えるだけ！
-    if (!hypocenter.includes("兵庫県")) return;
+    if (!hypocenter.includes("三重県")) return;
 
     // ▼ 新しい地震なら表示
     if (!lastEarthquakeTime || time > lastEarthquakeTime) {
