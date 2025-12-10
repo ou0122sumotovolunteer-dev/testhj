@@ -63,29 +63,21 @@ async function checkEarthquake() {
 
     const eq = data[0].earthquake;
     const time = new Date(eq.time);
-    
-    // 震源名
-    const hypocenter = eq.hypocenter?.name || "";
 
-    // ▼ 震源地域が兵庫県のときだけ表示
-    //   三重県に変えるなら「兵庫県」を「三重県」に変えるだけ！
-    if (!hypocenter.includes("三重県")) return;
+    // ★★★ 三重県の揺れがあるか判定（ここがポイント） ★★★
+    const isMie =
+      data[0].points.some(p => p.pref === "三重県");
 
-    // ▼ 新しい地震なら表示
+    if (!isMie) return;
+
+    // 新しい地震なら
     if (!lastEarthquakeTime || time > lastEarthquakeTime) {
       lastEarthquakeTime = time;
 
-      const timeStr = time.toLocaleString("ja-JP");
+      showAlertPopup(`【地震情報】最大震度 ${eq.maxScale/10}（震源：${eq.hypocenter.name}）`);
+      showFooter(`三重県で地震発生（最大震度 ${eq.maxScale/10}）`);
 
-      showAlertPopup(
-        `【地震情報】${hypocenter}で地震発生\n` +
-        `最大震度：${eq.maxScale / 10}\n` +
-        `発生時刻：${timeStr}`
-      );
-
-      showFooter(`${hypocenter}で地震発生（最大震度 ${eq.maxScale / 10}）`);
-
-      // 30分後に消す
+      // 30分後に地震表示を消す
       if (earthquakeTimer) clearTimeout(earthquakeTimer);
       earthquakeTimer = setTimeout(() => {
         hideAlertPopup();
@@ -96,6 +88,7 @@ async function checkEarthquake() {
     console.log("P2P地震取得エラー", e);
   }
 }
+
 
 
 
