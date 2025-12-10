@@ -63,29 +63,29 @@ async function checkEarthquake() {
 
     const eq = data[0].earthquake;
     const time = new Date(eq.time);
-    const hypocenter = eq.hypocenter.name;
+    
+    // 震源名
+    const hypocenter = eq.hypocenter?.name || "";
 
-// ▼ 震源地域が兵庫県のときだけ表示
-//   三重県に変えたいなら "兵庫県" を "三重県" に変えるだけでOK
-if (!hypocenter.includes("兵庫県")) {
-  return; // 兵庫県以外は無視
-}
+    // ▼ 震源地域が兵庫県のときだけ表示
+    //   三重県に変えるなら「兵庫県」を「三重県」に変えるだけ！
+    if (!hypocenter.includes("兵庫県")) return;
 
-    // 新しい地震なら表示
+    // ▼ 新しい地震なら表示
     if (!lastEarthquakeTime || time > lastEarthquakeTime) {
       lastEarthquakeTime = time;
 
-      const timeStr = time.toLocaleString("ja-JP"); // 時刻を日本語表記で
+      const timeStr = time.toLocaleString("ja-JP");
 
       showAlertPopup(
-        `【地震情報】兵庫県で地震発生\n` +
+        `【地震情報】${hypocenter}で地震発生\n` +
         `最大震度：${eq.maxScale / 10}\n` +
         `発生時刻：${timeStr}`
       );
 
-      showFooter(`兵庫県で地震発生（最大震度 ${eq.maxScale / 10}）`);
+      showFooter(`${hypocenter}で地震発生（最大震度 ${eq.maxScale / 10}）`);
 
-      // 30分後に自動で消す
+      // 30分後に消す
       if (earthquakeTimer) clearTimeout(earthquakeTimer);
       earthquakeTimer = setTimeout(() => {
         hideAlertPopup();
@@ -100,7 +100,7 @@ if (!hypocenter.includes("兵庫県")) {
 
 
 // ----------------------------
-// 津波情報の取得
+// 津波情報の取得（気象庁 JSON）
 // ----------------------------
 async function checkTsunami() {
   try {
@@ -115,10 +115,11 @@ async function checkTsunami() {
       areaList.forEach(a => {
         if (a.Name.includes(TARGET_CITY)) {
           isActive = true;
-          message = t.Code === "52" ? "津波警報" :
-                    t.Code === "51" ? "津波注意報" :
-                    t.Code === "53" ? "大津波警報" :
-                    "津波情報";
+          message =
+            t.Code === "52" ? "津波警報" :
+            t.Code === "51" ? "津波注意報" :
+            t.Code === "53" ? "大津波警報" :
+            "津波情報";
         }
       });
     });
